@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import axios from "axios";
@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route } from "react-router-dom";
 import { Button, Form, FormGroup, Input } from "reactstrap";
 import { BsFillTrashFill } from "react-icons/bs";
 import Pagination from "react-js-pagination";
+// https://www.npmjs.com/package/react-js-pagination
 class UserForm extends React.Component {
 	constructor(props) {
 		super(props);
@@ -204,17 +205,14 @@ class Main extends React.Component {
 				<UserTitle />
 			</li>,
 		];
-        let firstItem = (this.state.activePage-1) * this.itemsOnPage;
-        let lastItem=firstItem+this.itemsOnPage;
-        if (lastItem > this.state.userList.length - 1) lastItem = this.state.userList.length;
-		for (
-			let n = firstItem;
-			n < lastItem;
-			n++
-		) {
+		let firstItem = (this.state.activePage - 1) * this.itemsOnPage;
+		let lastItem = firstItem + this.itemsOnPage;
+		if (lastItem > this.state.userList.length - 1)
+			lastItem = this.state.userList.length;
+		for (let n = firstItem; n < lastItem; n++) {
 			// this.state.userList.forEach((i) => {
 			let i = this.state.userList[n];
-            console.log(this.state.userList);
+			console.log(this.state.userList);
 			userHtml.push(
 				<li key={i.id}>
 					<a href={`edit/${i.id}`}>
@@ -226,7 +224,7 @@ class Main extends React.Component {
 		}
 		return (
 			<div>
-				<ul>{userHtml}</ul>
+				<ul className="user-list">{userHtml}</ul>
 			</div>
 		);
 	};
@@ -242,7 +240,7 @@ class Main extends React.Component {
 	render() {
 		return (
 			<div>
-				<h2>
+				<h2 className="user-header">
 					<a href="/add">
 						<Button color="primary">New user</Button>
 					</a>
@@ -250,15 +248,17 @@ class Main extends React.Component {
 				<div className="user-list">
 					<this.Users />
 				</div>
-				<Pagination
-					activePage={this.state.activePage}
-					itemsCountPerPage={this.itemsOnPage}
-					totalItemsCount={this.state.totalItemsCount}
-					pageRangeDisplayed={5}
-					onChange={this.handlePageChange}
-					itemClass="page-item"
-					linkClass="page-link"
-				/>
+					<div className="pagination-bar">
+						<Pagination
+							activePage={this.state.activePage}
+							itemsCountPerPage={this.itemsOnPage}
+							totalItemsCount={this.state.totalItemsCount}
+							pageRangeDisplayed={5}
+							onChange={this.handlePageChange}
+							itemClass="page-item"
+							linkClass="page-link"
+						/>
+					</div>
 			</div>
 		);
 	}
