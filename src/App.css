@@ -85,4 +85,12 @@ body ul li span.user-item {
 body ul li span.click {
   cursor: pointer;
 }
+
+body .form {
+  width: 80%;
+}
+
+body .form * {
+  margin: 10px;
+}
 /*# sourceMappingURL=App.css.map */

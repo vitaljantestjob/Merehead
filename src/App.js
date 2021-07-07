@@ -1,44 +1,161 @@
 import React, { useState } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import axios from "axios";
 import { BrowserRouter as Router, Route } from "react-router-dom";
-import { Button } from "reactstrap";
+import { Button, Form, FormGroup, Input } from "reactstrap";
 import { BsFillTrashFill } from "react-icons/bs";
 
-const UserForm = (props) => {
-	return (
-		<form>
-			<h2>{props.title}</h2>
-			<input type="text" />
-			<h2>
-				<button type="button" onClick={props.submit}>
-					Save
-				</button>
-				<a href="/">
-					<button type="button">Cancel</button>
-				</a>
-			</h2>
-		</form>
-	);
-};
+class UserForm extends React.Component {
+	constructor(props) {
+		super(props);
+        this.state={};
+		this.state.name = "";
+		this.state.surname = "";
+		this.state.desc = "";
+		this.state.id = this.props.id;
+	}
+	componentDidMount() {
+		if (this.props.mode === "edit") {
+			axios
+				.get("http://77.120.241.80:8811/api/users")
+				.then((resp) => {
+					const item = resp.data.users.filter((i) => {
+						return i.id === this.state.id;
+					});
+					if (item) {
+						this.setState({ name: item[0].name });
+						this.setState({ surname: item[0].surname });
+						this.setState({ desc: item[0].desc });
+					}
+				})
+				.catch((err) => console.log(err));
+		}
+	}
+	render() {
+		return (
+			<Form className="form">
+				<FormGroup>
+					<h2>{this.props.title}</h2>
+				</FormGroup>
+				<FormGroup>
+					<Input
+						type="text"
+						placeholder="Name"
+						value={this.state.name}
+						onChange={(e) => {
+							this.setState({ name: e.target.value });
+						}}
+					/>
+				</FormGroup>
+				<FormGroup>
+					<Input
+						type="text"
+						placeholder="Surname"
+						value={this.state.surname}
+						onChange={(e) => {
+							this.setState({ surname: e.target.value });
+						}}
+					/>
+				</FormGroup>
+				<FormGroup>
+					<Input
+						type="textarea"
+						placeholder="Description"
+						value={this.state.desc}
+						onChange={(e) => {
+							this.setState({ desc: e.target.value });
+						}}
+					></Input>
+				</FormGroup>
+				<FormGroup>
+					<Button
+						color="primary"
+						onClick={() =>
+							this.props.submit(
+								this.state.id,
+								this.state.name,
+								this.state.surname,
+								this.state.desc
+							)
+						}
+					>
+						Save
+					</Button>
+					<a href="/">
+						<Button color="secondary">Cancel</Button>
+					</a>
+				</FormGroup>
+			</Form>
+		);
+	}
+}
 const Add = () => {
-	const submit = (e) => {
-		console.log("Add");
+	const submit = (id, name, surname, desc) => {
+		console.log(id, name, surname, desc);
+		const data = new FormData();
+		data.append("name", name);
+		data.append("surname", surname);
+		data.append("desc", desc);
+		axios
+			.post("http://77.120.241.80:8811/api/users", data)
+			.then((resp) => {
+				console.log(resp);
+				setTimeout(() => {
+					// window.location.assign("/");
+				}, 2000);
+			})
+			.catch((err) => {
+				console.log(err);
+			});
 	};
 	return (
 		<div>
-			<UserForm title={"Add new user"} submit={submit} />
+			<UserForm title={"Add new user"} submit={submit} mode={"add"} id={null}/>
 		</div>
 	);
 };
-const Edit = () => {
+const Edit = (props) => {
 	const submit = (e) => {
 		console.log("Edit");
 	};
-	return <UserForm title={"Edit user"} submit={submit} />;
+	return (
+		<UserForm
+			title={"Edit user"}
+			submit={submit}
+			mode={"edit"}
+			id={props.match.params.number}
+		/>
+	);
 };
-const Delete = () => {
-	return <div></div>;
+const Delete = (props) => {
+	return (
+		<span
+			className="delete-button"
+			value={props.value}
+			onClick={(e) => {
+				axios
+					.delete(`http://77.120.241.80:8811/api/user/${props.value}`)
+					.then((resp) => {
+						console.log(resp.data);
+					})
+					.catch((err) => {
+						console.log(err);
+					});
+			}}
+		>
+			<BsFillTrashFill />
+		</span>
+	);
+};
+const UserItem = (props) => {
+	return (
+		<span className="user-item click" value={props.user.id}>
+			<span className="user-id">{props.user.id}</span>
+			<span className="user-name">{props.user.name}</span>
+			<span className="user-surname">{props.user.surname}</span>
+		</span>
+	);
 };
 class Main extends React.Component {
 	constructor() {
@@ -58,14 +175,10 @@ class Main extends React.Component {
 		this.state.userList.forEach((i) => {
 			userHtml.push(
 				<li key={i.id}>
-					<span className="user-item">
-						<span className="user-id">{i.id}</span>
-						<span className="user-name">{i.name}</span>
-						<span className="user-surname">{i.surname}</span>
-					</span>
-					<span className="delete-button">
-						<BsFillTrashFill />
-					</span>
+					<a href={`edit/${i.id}`}>
+						<UserItem user={i} />
+					</a>
+					<Delete value={i.id} />
 				</li>
 			);
 		});
@@ -84,7 +197,7 @@ class Main extends React.Component {
 			<div>
 				<h2>
 					<a href="/add">
-						<button>New user</button>
+						<Button color="primary">New user</Button>
 					</a>
 				</h2>
 				<div className="user-list">
@@ -101,8 +214,7 @@ function App() {
 			<div>
 				<Route exact path="/" component={Main} />
 				<Route path="/add" component={Add} />
-				<Route path="/delete" component={Delete} />
-				<Route path="/edit" component={Edit} />
+				<Route path="/edit/:number" component={Edit} />
 			</div>
 		</Router>
 	);
