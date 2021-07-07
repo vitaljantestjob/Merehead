@@ -5,7 +5,7 @@ import axios from "axios";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import { Button, Form, FormGroup, Input } from "reactstrap";
 import { BsFillTrashFill } from "react-icons/bs";
-
+import Pagination from "react-js-pagination";
 class UserForm extends React.Component {
 	constructor(props) {
 		super(props);
@@ -96,7 +96,11 @@ class UserForm extends React.Component {
 const Add = () => {
 	const submit = (id, name, surname, desc) => {
 		axios
-			.post("http://77.120.241.80:8811/api/users", {name:name, surname:surname, desc:desc})
+			.post("http://77.120.241.80:8811/api/users", {
+				name: name,
+				surname: surname,
+				desc: desc,
+			})
 			.then((resp) => {
 				console.log(resp.data.id);
 				setTimeout(() => {
@@ -186,14 +190,31 @@ class Main extends React.Component {
 	constructor() {
 		super();
 		this.state = { userList: [] };
+		this.state.activePage = 1;
+		this.state.totalItemsCount = 0;
+		this.itemsOnPage = 5;
 	}
+	handlePageChange = (pageNumber) => {
+		console.log(`active page is ${pageNumber}`);
+		this.setState({ activePage: pageNumber });
+	};
 	Users = () => {
 		let userHtml = [
 			<li key={0} className="title">
 				<UserTitle />
 			</li>,
 		];
-		this.state.userList.forEach((i) => {
+        let firstItem = (this.state.activePage-1) * this.itemsOnPage;
+        let lastItem=firstItem+this.itemsOnPage;
+        if (lastItem > this.state.userList.length - 1) lastItem = this.state.userList.length;
+		for (
+			let n = firstItem;
+			n < lastItem;
+			n++
+		) {
+			// this.state.userList.forEach((i) => {
+			let i = this.state.userList[n];
+            console.log(this.state.userList);
 			userHtml.push(
 				<li key={i.id}>
 					<a href={`edit/${i.id}`}>
@@ -202,14 +223,19 @@ class Main extends React.Component {
 					<Delete value={i.id} />
 				</li>
 			);
-		});
-		return <ul>{userHtml}</ul>;
+		}
+		return (
+			<div>
+				<ul>{userHtml}</ul>
+			</div>
+		);
 	};
 	componentDidMount() {
 		axios
 			.get("http://77.120.241.80:8811/api/users")
 			.then((resp) => {
 				this.setState({ userList: resp.data.users });
+				this.setState({ totalItemsCount: resp.data.users.length });
 			})
 			.catch((err) => console.log(err));
 	}
@@ -224,6 +250,15 @@ class Main extends React.Component {
 				<div className="user-list">
 					<this.Users />
 				</div>
+				<Pagination
+					activePage={this.state.activePage}
+					itemsCountPerPage={this.itemsOnPage}
+					totalItemsCount={this.state.totalItemsCount}
+					pageRangeDisplayed={5}
+					onChange={this.handlePageChange}
+					itemClass="page-item"
+					linkClass="page-link"
+				/>
 			</div>
 		);
 	}
