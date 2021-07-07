@@ -9,7 +9,7 @@ import { BsFillTrashFill } from "react-icons/bs";
 class UserForm extends React.Component {
 	constructor(props) {
 		super(props);
-        this.state={};
+		this.state = {};
 		this.state.name = "";
 		this.state.surname = "";
 		this.state.desc = "";
@@ -70,6 +70,7 @@ class UserForm extends React.Component {
 				</FormGroup>
 				<FormGroup>
 					<Button
+						type="button"
 						color="primary"
 						onClick={() =>
 							this.props.submit(
@@ -82,8 +83,10 @@ class UserForm extends React.Component {
 					>
 						Save
 					</Button>
-					<a href="/">
-						<Button color="secondary">Cancel</Button>
+					<a href="/main">
+						<Button type="button" color="secondary">
+							Cancel
+						</Button>
 					</a>
 				</FormGroup>
 			</Form>
@@ -92,17 +95,12 @@ class UserForm extends React.Component {
 }
 const Add = () => {
 	const submit = (id, name, surname, desc) => {
-		console.log(id, name, surname, desc);
-		const data = new FormData();
-		data.append("name", name);
-		data.append("surname", surname);
-		data.append("desc", desc);
 		axios
-			.post("http://77.120.241.80:8811/api/users", data)
+			.post("http://77.120.241.80:8811/api/users", {name:name, surname:surname, desc:desc})
 			.then((resp) => {
-				console.log(resp);
+				console.log(resp.data.id);
 				setTimeout(() => {
-					// window.location.assign("/");
+					window.location.assign("/main");
 				}, 2000);
 			})
 			.catch((err) => {
@@ -111,13 +109,31 @@ const Add = () => {
 	};
 	return (
 		<div>
-			<UserForm title={"Add new user"} submit={submit} mode={"add"} id={null}/>
+			<UserForm
+				title={"Add new user"}
+				submit={submit}
+				mode={"add"}
+				id={null}
+			/>
 		</div>
 	);
 };
 const Edit = (props) => {
-	const submit = (e) => {
-		console.log("Edit");
+	const submit = (name, surname, desc) => {
+		axios
+			.put(
+				`http://77.120.241.80:8811/api/user/${props.match.params.number}`,
+				{ name: name, surname: surname, desc: desc }
+			)
+			.then((resp) => {
+				console.log(resp.data);
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+		setTimeout(() => {
+			window.location.assign("/main/");
+		}, 2000);
 	};
 	return (
 		<UserForm
@@ -157,6 +173,15 @@ const UserItem = (props) => {
 		</span>
 	);
 };
+const UserTitle = () => {
+	return (
+		<span className="user-item">
+			<span className="user-id">ID</span>
+			<span className="user-name">Name</span>
+			<span className="user-surname">Surname</span>
+		</span>
+	);
+};
 class Main extends React.Component {
 	constructor() {
 		super();
@@ -165,11 +190,7 @@ class Main extends React.Component {
 	Users = () => {
 		let userHtml = [
 			<li key={0} className="title">
-				<span className="user-item">
-					<span className="user-id">ID</span>
-					<span className="user-name">Name</span>
-					<span className="user-surname">Surname</span>
-				</span>
+				<UserTitle />
 			</li>,
 		];
 		this.state.userList.forEach((i) => {
@@ -213,7 +234,8 @@ function App() {
 		<Router>
 			<div>
 				<Route exact path="/" component={Main} />
-				<Route path="/add" component={Add} />
+				<Route path="/main/" component={Main} />
+				<Route path="/add/" component={Add} />
 				<Route path="/edit/:number" component={Edit} />
 			</div>
 		</Router>
