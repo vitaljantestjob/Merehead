@@ -14,7 +14,6 @@ body {
 		@media (max-width: $small) {
 			width: 98%;
 		}
-		// text-align: center;
 	}
 
 	.user-list {
@@ -28,7 +27,6 @@ body {
 			padding: 3px;
 			margin-bottom: 5px;
 			list-style-type: none;
-			width: 75%;
 			@media (max-width: $small) {
 				width: 95%;
 			}

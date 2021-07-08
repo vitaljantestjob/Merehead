@@ -6,8 +6,9 @@ import { BrowserRouter as Router, Route } from "react-router-dom";
 import { Button, Form, FormGroup, Input } from "reactstrap";
 import { BsFillTrashFill } from "react-icons/bs";
 import Pagination from "react-js-pagination";
-// https://www.npmjs.com/package/react-js-pagination
+// pagination component:  https://www.npmjs.com/package/react-js-pagination
 class UserForm extends React.Component {
+	// edit & add user form
 	constructor(props) {
 		super(props);
 		this.state = {};
@@ -16,14 +17,22 @@ class UserForm extends React.Component {
 		this.state.desc = "";
 		this.state.id = this.props.id;
 	}
+	isSubmitEnable() {
+		return this.state.name.length > 0 &&
+			this.state.surname.length > 0 &&
+			this.state.desc.length > 0
+			? true
+			: false;
+	}
 	componentDidMount() {
 		if (this.props.mode === "edit") {
 			axios
 				.get("http://77.120.241.80:8811/api/users")
 				.then((resp) => {
-					const item = resp.data.users.filter((i) => {
-						return i.id === this.state.id;
+					const item = resp.data.filter((i) => {
+						return +i.id === +this.state.id;
 					});
+					console.log(resp.data, this.state.id);
 					if (item) {
 						this.setState({ name: item[0].name });
 						this.setState({ surname: item[0].surname });
@@ -73,18 +82,27 @@ class UserForm extends React.Component {
 					<Button
 						type="button"
 						color="primary"
-						onClick={() =>
+						style={{
+							opacity: this.isSubmitEnable() ? 1 : 0.5,
+							cursor: this.isSubmitEnable()
+								? "pointer"
+								: "default",
+						}}
+						onClick={() => {
+							if (!this.isSubmitEnable()) {
+								alert("Enter the values of all fields!");
+								return;
+							}
 							this.props.submit(
-								this.state.id,
 								this.state.name,
 								this.state.surname,
 								this.state.desc
-							)
-						}
+							);
+						}}
 					>
 						Save
 					</Button>
-					<a href="/main">
+					<a href="/">
 						<Button type="button" color="secondary">
 							Cancel
 						</Button>
@@ -95,7 +113,8 @@ class UserForm extends React.Component {
 	}
 }
 const Add = () => {
-	const submit = (id, name, surname, desc) => {
+	// user add form
+	const submit = (name, surname, desc) => {
 		axios
 			.post("http://77.120.241.80:8811/api/users", {
 				name: name,
@@ -105,7 +124,7 @@ const Add = () => {
 			.then((resp) => {
 				console.log(resp.data.id);
 				setTimeout(() => {
-					window.location.assign("/main");
+					window.location.assign("/");
 				}, 2000);
 			})
 			.catch((err) => {
@@ -124,6 +143,7 @@ const Add = () => {
 	);
 };
 const Edit = (props) => {
+	// user edit form
 	const submit = (name, surname, desc) => {
 		axios
 			.put(
@@ -137,7 +157,7 @@ const Edit = (props) => {
 				console.log(err);
 			});
 		setTimeout(() => {
-			window.location.assign("/main/");
+			window.location.assign("/");
 		}, 2000);
 	};
 	return (
@@ -150,6 +170,7 @@ const Edit = (props) => {
 	);
 };
 const Delete = (props) => {
+	// delete user button
 	return (
 		<span
 			className="delete-button"
@@ -159,6 +180,9 @@ const Delete = (props) => {
 					.delete(`http://77.120.241.80:8811/api/user/${props.value}`)
 					.then((resp) => {
 						console.log(resp.data);
+						setTimeout(() => {
+							window.location.assign("/");
+						}, 2000);
 					})
 					.catch((err) => {
 						console.log(err);
@@ -170,6 +194,7 @@ const Delete = (props) => {
 	);
 };
 const UserItem = (props) => {
+	// userlist item component
 	return (
 		<span className="user-item click" value={props.user.id}>
 			<span className="user-id">{props.user.id}</span>
@@ -187,32 +212,38 @@ const UserTitle = () => {
 		</span>
 	);
 };
+//==============================================================
 class Main extends React.Component {
 	constructor() {
 		super();
 		this.state = { userList: [] };
-		this.state.activePage = 1;
+		this.state.activePage = localStorage.getItem("activePage")
+			? +localStorage.getItem("activePage")
+			: 1;
 		this.state.totalItemsCount = 0;
 		this.itemsOnPage = 5;
 	}
+	//-----------------------------------------------------
 	handlePageChange = (pageNumber) => {
-		console.log(`active page is ${pageNumber}`);
+		// pagination
 		this.setState({ activePage: pageNumber });
+		localStorage.setItem("activePage", pageNumber);
 	};
+	// --------------------------------------------------------
 	Users = () => {
 		let userHtml = [
 			<li key={0} className="title">
 				<UserTitle />
 			</li>,
 		];
+		// pagination indexes:
 		let firstItem = (this.state.activePage - 1) * this.itemsOnPage;
 		let lastItem = firstItem + this.itemsOnPage;
 		if (lastItem > this.state.userList.length - 1)
 			lastItem = this.state.userList.length;
+		// users list html create:
 		for (let n = firstItem; n < lastItem; n++) {
-			// this.state.userList.forEach((i) => {
 			let i = this.state.userList[n];
-			console.log(this.state.userList);
 			userHtml.push(
 				<li key={i.id}>
 					<a href={`edit/${i.id}`}>
@@ -232,8 +263,8 @@ class Main extends React.Component {
 		axios
 			.get("http://77.120.241.80:8811/api/users")
 			.then((resp) => {
-				this.setState({ userList: resp.data.users });
-				this.setState({ totalItemsCount: resp.data.users.length });
+				this.setState({ userList: resp.data });
+				this.setState({ totalItemsCount: resp.data.length });
 			})
 			.catch((err) => console.log(err));
 	}
@@ -248,17 +279,17 @@ class Main extends React.Component {
 				<div className="user-list">
 					<this.Users />
 				</div>
-					<div className="pagination-bar">
-						<Pagination
-							activePage={this.state.activePage}
-							itemsCountPerPage={this.itemsOnPage}
-							totalItemsCount={this.state.totalItemsCount}
-							pageRangeDisplayed={5}
-							onChange={this.handlePageChange}
-							itemClass="page-item"
-							linkClass="page-link"
-						/>
-					</div>
+				<div className="pagination-bar">
+					<Pagination
+						activePage={this.state.activePage}
+						itemsCountPerPage={this.itemsOnPage}
+						totalItemsCount={this.state.totalItemsCount}
+						pageRangeDisplayed={5}
+						onChange={this.handlePageChange}
+						itemClass="page-item"
+						linkClass="page-link"
+					/>
+				</div>
 			</div>
 		);
 	}
@@ -269,7 +300,6 @@ function App() {
 		<Router>
 			<div>
 				<Route exact path="/" component={Main} />
-				<Route path="/main/" component={Main} />
 				<Route path="/add/" component={Add} />
 				<Route path="/edit/:number" component={Edit} />
 			</div>
